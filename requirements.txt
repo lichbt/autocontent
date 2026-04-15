@@ -1,0 +1,32 @@
+# SEO Content Engine - Python Dependencies
+
+# Core
+SQLAlchemy>=2.0.0
+psycopg2-binary>=2.9.9
+
+# LLM Providers
+openai>=1.0.0
+anthropic>=0.18.0
+google-genai>=0.3.0
+
+# Embeddings & NLP
+sentence-transformers>=2.2.0
+spacy>=3.7.0
+
+# Web Scraping
+playwright>=1.40.0
+beautifulsoup4>=4.12.0
+requests>=2.31.0
+lxml>=4.9.0
+
+# WordPress
+python-wordpress-xmlrpc>=2.3.0
+python-dateutil>=2.8.2
+
+# Utilities
+python-dotenv>=1.0.0
+PyYAML>=6.0.0
+
+# Testing / Dev
+pytest>=7.4.0
+pytest-asyncio>=0.21.0

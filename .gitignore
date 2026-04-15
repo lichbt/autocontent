@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+.venv/
+venv/
+ENV/
+env/
+*.egg-info/
+dist/
+build/
+
+# Data
+*.db
+*.sqlite
+*.sqlite3
+content_engine.db
+
+# Logs
+logs/
+*.log
+
+# Env
+.env
+.env.local
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Drafts and artifacts
+artifacts/
+drafts/
