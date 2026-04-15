@@ -29,7 +29,23 @@ def generate(
             logger.debug(f"Skipping disabled/missing provider: {provider_name}")
             continue
 
-        base_url = (cfg.base_url or "https://api.openai.com/v1").rstrip("/")
+        # Set default base URLs for known providers
+        if not cfg.base_url:
+            if provider_name in ("router", "9router"):
+                base_url = "http://localhost:20128/v1"
+            elif provider_name == "deepseek":
+                base_url = "https://api.deepseek.com/v1"
+            elif provider_name == "openai":
+                base_url = "https://api.openai.com/v1"
+            elif provider_name == "anthropic":
+                base_url = "https://api.anthropic.com"
+            elif provider_name == "gemini":
+                base_url = "https://generativelanguage.googleapis.com/v1beta"
+            else:
+                logger.warning(f"No base_url configured for {provider_name}, skipping.")
+                continue
+        else:
+            base_url = cfg.base_url.rstrip("/")
         model = cfg.model
 
         for attempt in range(3):
@@ -41,13 +57,20 @@ def generate(
                         {"role": "user", "content": prompt},
                     ],
                     "temperature": temperature,
+                    "stream": False,  # Always use non-streaming for reliability
                 }
+                # Limit tokens for SEO drafts to avoid long generation
                 if max_tokens:
                     payload["max_tokens"] = max_tokens
+                elif provider_name in ("router", "9router"):
+                    payload["max_tokens"] = 500  # Cap local router generation
 
                 logger.debug(
                     f"LLM request: provider={provider_name}, model={model}, attempt={attempt + 1}"
                 )
+
+                # Use longer timeout for local, shorter for remote
+                timeout = 30 if "localhost" in base_url else cfg.timeout_seconds
 
                 response = requests.post(
                     f"{base_url}/chat/completions",
@@ -56,7 +79,7 @@ def generate(
                         "Content-Type": "application/json",
                     },
                     json=payload,
-                    timeout=cfg.timeout_seconds,
+                    timeout=timeout,
                 )
 
                 if response.status_code == 429:
@@ -92,12 +115,15 @@ def generate(
                 logger.warning(
                     f"Timeout on {provider_name}, attempt {attempt + 1}/3"
                 )
+                if attempt < 2:
+                    time.sleep(2)  # brief pause before retry
             except requests.exceptions.RequestException as exc:
                 logger.warning(
                     f"Request failed for {provider_name}",
                     extra_data={"error": str(exc)},
                 )
-                break  # Network error, try next provider
+                if attempt < 2:
+                    time.sleep(2)
 
     logger.error("All configured LLM providers failed")
     return None

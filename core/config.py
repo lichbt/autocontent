@@ -133,7 +133,7 @@ def load_config() -> AppConfig:
         "minimax": _provider_from_env("MINIMAX", "minimax", None),
         "kimi": _provider_from_env("KIMI", "kimi", None),
         "deepseek": _provider_from_env("DEEPSEEK", "deepseek", None),
-        "router": _provider_from_env("ROUTER", "router", os.getenv("ROUTER_MODEL", "9router/openclaw-combo")),
+        "router": _provider_from_env("9ROUTER", "router", os.getenv("ROUTER_MODEL", "openclaw-combo")),
     }
 
     config.log_dir.mkdir(parents=True, exist_ok=True)
