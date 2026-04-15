@@ -18,10 +18,15 @@ logger = get_logger("scripts.run_pipeline")
 
 
 def ensure_site(session, domain: str) -> Site:
-    site = session.query(Site).filter(Site.domain == domain).first()
+    # Normalize domain: strip scheme, www, and trailing slashes
+    clean_domain = domain.lower().replace("https://", "").replace("http://", "").rstrip("/")
+    if clean_domain.startswith("www."):
+        clean_domain = clean_domain[4:]
+
+    site = session.query(Site).filter(Site.domain == clean_domain).first()
     if site:
         return site
-    site = Site(domain=domain, cms_type=CMSChoice.WORDPRESS)
+    site = Site(domain=clean_domain, cms_type=CMSChoice.WORDPRESS)
     session.add(site)
     session.flush()
     return site
