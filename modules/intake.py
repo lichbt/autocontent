@@ -1,10 +1,10 @@
-"""Keyword intake module for CSV imports."""
+"""Keyword intake module for CSV and research imports."""
 
 from __future__ import annotations
 
 import csv
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
@@ -70,12 +70,58 @@ class IntakeModule:
         logger.info("CSV intake completed", extra_data={"site_id": site_id, **result})
         return result
 
+    def run_from_research(
+        self, site_id: str, researched_keywords: list[dict[str, Any]]
+    ) -> dict[str, int]:
+        site = self.session.get(Site, site_id)
+        if not site:
+            raise ValueError(f"Site not found: {site_id}")
+
+        total = len(researched_keywords)
+        inserted = 0
+        skipped = 0
+
+        for item in researched_keywords:
+            keyword_text = str(item.get("keyword", "")).strip().lower()
+            if not keyword_text:
+                skipped += 1
+                continue
+
+            existing = (
+                self.session.query(Keyword)
+                .filter(Keyword.site_id == site_id, Keyword.raw_keyword == keyword_text)
+                .first()
+            )
+            if existing:
+                skipped += 1
+                continue
+
+            # Assign heuristics for missing volume/KD
+            volume = 500 if item.get("relevance") == "high" else 100
+            difficulty = 40
+
+            keyword = Keyword(
+                site_id=site_id,
+                raw_keyword=keyword_text,
+                search_volume=volume,
+                difficulty=difficulty,
+                intent=SearchIntent.INFORMATIONAL,
+                status=KeywordStatus.PENDING_CLUSTER,
+            )
+            self.session.add(keyword)
+            inserted += 1
+
+        self.session.commit()
+        result = {"total": total, "inserted": inserted, "skipped": skipped}
+        logger.info("Research intake completed", extra_data={"site_id": site_id, **result})
+        return result
+
     @staticmethod
     def _pick(row: dict[str, object], keys: list[str]) -> Optional[str]:
         for key in keys:
             value = row.get(key)
             if isinstance(value, str) and value.strip():
-                return value
+                return value.strip().lower()
         return None
 
     @staticmethod

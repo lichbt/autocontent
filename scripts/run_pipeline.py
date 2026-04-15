@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from core.db import init_db, get_session
 from core.logging import get_logger
 from core.models import Site, CMSChoice
-from modules import BriefingModule, ClusterModule, IntakeModule, PublishModule, WriterModule
+from modules import BriefingModule, ClusterModule, IntakeModule, PublishModule, WriterModule, ResearchModule
 
 logger = get_logger("scripts.run_pipeline")
 
@@ -31,6 +31,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Run the SEO Content Engine pipeline")
     parser.add_argument("--site", required=True, help="Site domain, e.g. example.com")
     parser.add_argument("--csv", help="Optional keyword CSV file to import before running pipeline")
+    parser.add_argument("--competitors", help="Comma-separated list of competitor URLs for keyword discovery")
+    parser.add_argument("--seeds", help="Comma-separated list of seed keywords for Google Suggest expansion")
     parser.add_argument("--skip-publish", action="store_true", help="Skip WordPress publishing step")
     args = parser.parse_args()
 
@@ -41,6 +43,13 @@ def main() -> None:
 
         if args.csv:
             IntakeModule(session).run_from_csv(Path(args.csv), site.id)
+
+        if args.competitors or args.seeds:
+            comp_list = [u.strip() for u in args.competitors.split(",")] if args.competitors else []
+            seed_list = [s.strip() for s in args.seeds.split(",")] if args.seeds else []
+            logger.info("Running competitor research module")
+            res = ResearchModule().run(site, comp_list, seed_list)
+            IntakeModule(session).run_from_research(site.id, res["keywords"])
 
         ClusterModule().run(session)
         BriefingModule(session).run()

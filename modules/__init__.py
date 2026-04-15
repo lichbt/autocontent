@@ -5,6 +5,7 @@ from modules.cluster import ClusterModule
 from modules.briefing import BriefingModule
 from modules.writer import WriterModule
 from modules.publish import PublishModule
+from modules.research import ResearchModule
 
 __all__ = [
     "IntakeModule",
@@ -12,4 +13,5 @@ __all__ = [
     "BriefingModule",
     "WriterModule",
     "PublishModule",
+    "ResearchModule",
 ]
