@@ -6,6 +6,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from core.llm_client import generate
 from core.logging import get_logger
 from core.models import Article, ArticleStatus, Cluster, ClusterStatus
 
@@ -97,8 +98,16 @@ class WriterModule:
             extra_data={"cluster_id": cluster.id, "slug": slug, "target_word_count": target_word_count},
         )
 
-    @staticmethod
-    def _paragraph(primary_keyword: str, section: str) -> str:
+    def _paragraph(self, primary_keyword: str, section: str) -> str:
+        prompt = (
+            f"Write one concise, high-value paragraph for an SEO article section. "
+            f"Primary keyword: '{primary_keyword}'. Section heading: '{section}'. "
+            "Tone: expert, practical, no fluff, no fake stats. Return plain text only."
+        )
+        generated = generate(prompt)
+        if generated:
+            return generated
+
         return (
             f"This section explains {section.lower()} for {primary_keyword}. "
             f"It focuses on clarity, practical decision factors, and SEO-friendly coverage for readers researching {primary_keyword}."
@@ -117,8 +126,15 @@ class WriterModule:
             },
         ]
 
-    @staticmethod
-    def _meta_description(primary_keyword: str) -> str:
+    def _meta_description(self, primary_keyword: str) -> str:
+        prompt = (
+            f"Write an SEO meta description under 155 characters for keyword: {primary_keyword}. "
+            "Make it click-worthy and specific."
+        )
+        generated = generate(prompt)
+        if generated:
+            return generated[:155]
+
         text = f"Learn how to evaluate {primary_keyword} with a practical guide covering key considerations, top options, and FAQs."
         return text[:155]
 
