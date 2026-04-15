@@ -13,6 +13,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 DEFAULT_DATABASE_URL = "sqlite:///content_engine.db"
 DEFAULT_LOG_LEVEL = "INFO"
@@ -20,6 +25,7 @@ DEFAULT_LOG_DIR = "logs"
 DEFAULT_ARTIFACTS_DIR = "artifacts"
 DEFAULT_DRAFTS_DIR = "drafts"
 DEFAULT_PROVIDER_ORDER = [
+    "router",
     "anthropic",
     "openai",
     "gemini",
